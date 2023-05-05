@@ -102,6 +102,7 @@ class Lexer:
         pattern = re.compile(f"({'|'.join([id_regex, number_regex, operator_regex, string_regex, separator_regex, whitespace_regex])})")
 
         state=''
+        type = ''
         total_symbols_in_previos_lines = 0
         # Iterate over all matches in the source code
         for match in pattern.finditer(source_code):
@@ -111,6 +112,7 @@ class Lexer:
                 if '\n' in lex:
                     self.line += lex.count('\n')
                     self.pos = 0
+                    type = ''
                     total_symbols_in_previos_lines = match.end()
             elif re.match(id_regex, lex):
                 if lex in self.keywords:
@@ -126,7 +128,7 @@ class Lexer:
                     if lex not in self.variables and type == "":
                         error_msg = " Unresolved reference"
                         state = "error"
-                        continue
+                        break
                     if (lex not in self.variables):
                         self.variables[lex] = type
                         variable_table.add_row([lex, type])
@@ -174,9 +176,9 @@ class Lexer:
                 error_msg = "Unknown token"
                 state = "error"
 
-            if state == "error":
-                print(f"{error_msg} at line {self.line}, position {self.pos}")
-                sys.exit(1)
+        if state == "error":
+            print(f"{error_msg} at line {self.line}, position {self.pos}: {lex}")
+            sys.exit(1)
 
         if output:
             print(keyword_table)
