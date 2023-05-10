@@ -22,6 +22,13 @@ def printTree(x, depth=0):
     for child in x.childrens:
         printTree(child, depth + 1)
 
+class Var:
+    def __init__(self, lex, depth):
+        self.lex = lex
+        self.depth = depth
+
+    def __eq__(self, other):
+        return (self.lex == other.lex) and (self.depth <= other.depth)
 
 class Parser:
     all_tokens = []
@@ -36,6 +43,7 @@ class Parser:
     open_brace = 0
     close_brace = 0
     new_var = []
+    cur_depth = 0
 
     type = None
 
@@ -60,9 +68,9 @@ class Parser:
 
         new_pos = token.pos - len(token.lex) - 1
         new_line = token.line if new_pos >= 0 else token.line - 1
-        new_pos = new_pos if new_pos >= 0 else len(self.lines[new_line-1]) + new_pos
+        #new_pos = new_pos if new_pos >= 0 else len(self.lines[new_line-1]) + new_pos
 
-        print(f'line: {new_line}, pos: {new_pos}. Parser error: {msg}')
+        print(f'line: {new_line}. Parser error: {msg}')
         sys.exit(1)
 
 
@@ -80,9 +88,9 @@ class Parser:
     def id(self):
         lex = self.all_tokens[self.k].lex
         if lex in self.variables:
-            if self.is_assignment and lex in self.new_var:
+            if self.is_assignment and Var(lex, self.cur_depth) in self.new_var:
                 self.error(self.all_tokens[self.k], f'this variable already exists: {lex}')
-            elif not self.is_assignment and lex not in self.new_var:
+            elif not self.is_assignment and Var(lex, self.cur_depth) not in self.new_var:
                 self.error(self.all_tokens[self.k], f'this variable doesnt exist: {lex}')
             if self.type and self.variables[lex] != self.type:
                 self.semantical_error(self.all_tokens[self.k], f"Incorrect type '{self.variables[lex]}', should be '{self.type}'")
@@ -90,7 +98,7 @@ class Parser:
                 self.type = self.variables[lex]
             n = Node('variable', lex)
             if self.is_assignment:
-                self.new_var.append(lex)
+                self.new_var.append(Var(lex, self.cur_depth))
             self.next_token()
             return n
         elif lex in self.constants:
@@ -299,6 +307,7 @@ class Parser:
     def _brace_statement(self):
         self.type = None
         self.open_brace += 1
+        self.cur_depth += 1
         n = Node('body')
         self.next_token()
         if (self.all_tokens[self.k].lex == '}'):
@@ -310,6 +319,7 @@ class Parser:
             if self.all_tokens[self.k].lex == 'end':
                 self.error(self.all_tokens[self.k], '"}" expected')
         self.close_brace += 1
+        self.cur_depth -= 1
         if (self.open_brace == self.close_brace):
             self.is_cycle = False
         self.next_token()
