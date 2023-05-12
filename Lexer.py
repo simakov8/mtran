@@ -22,7 +22,8 @@ class Lexer:
         "continue",
         "break",
         "print",
-        "cout"
+        "cout",
+        "return"
     ]
     simple_arith_operators = [
         "+",
@@ -72,6 +73,7 @@ class Lexer:
     include_operators = []
     include_constants = []
     variables = {}
+    functions = {}
     constants = {}
     all_tokens = []
 
@@ -83,11 +85,13 @@ class Lexer:
         delimeter_table = PrettyTable()
         operator_table = PrettyTable()
         const_table = PrettyTable()
+        func_table = PrettyTable()
         keyword_table.field_names = ["Keyword", "Description"]
         variable_table.field_names = ["Variable", "Description"]
         delimeter_table.field_names = ["Separator", "Description"]
         operator_table.field_names = ["Operator", "Description"]
         const_table.field_names = ["Constant", "Description"]
+        func_table.field_names = ["Functions", "Description"]
         is_float = False
 
         # Regular expressions for each token type
@@ -96,10 +100,11 @@ class Lexer:
         operator_regex = r"=|==|!=|<=|>=|<<|>>|<|>|[+\-*/%]=?|\+"
         string_regex = r'"(.*?)"'
         separator_regex = r"[(),;{}]"
+        func_regex = r"([a-zA-Z_]+)\((.*)\)"
         whitespace_regex = r"\s+"
 
         # Combine all regular expressions into one
-        pattern = re.compile(f"({'|'.join([id_regex, number_regex, operator_regex, string_regex, separator_regex, whitespace_regex])})")
+        pattern = re.compile(f"({'|'.join([func_regex, id_regex, number_regex, operator_regex, string_regex, separator_regex, whitespace_regex])})")
 
         state=''
         type = ''
@@ -114,6 +119,15 @@ class Lexer:
                     self.pos = 0
                     type = ''
                     total_symbols_in_previos_lines = match.end()
+            elif m := re.match(func_regex, lex):
+                func_name = m.group(1)
+                func_args = m.group(2).split(',')
+                if len(func_args) == 1 and func_args[0] == '':
+                    func_args.clear()
+                if func_name not in self.functions: #function defenition
+                    self.functions[func_name] = [arg.strip().split(' ')[0] for arg in func_args]
+                self.all_tokens.append(Token(func_name, self.line, self.pos))
+                [self.all_tokens.append(Token(arg.strip(), self.line, self.pos)) for arg in func_args]
             elif re.match(id_regex, lex):
                 if lex in self.keywords:
                     if (lex not in self.include_keywords):

@@ -1,7 +1,8 @@
+from Parser import Parser
 
 class Executable:
-    def __init__(self, ast_tree):
-        self.ast_tree = ast_tree
+    def __init__(self, parser: Parser):
+        self.parser = parser
     
     def execute(self):
         pass

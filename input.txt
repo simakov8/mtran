@@ -1,8 +1,15 @@
-int temp, num = 0;
-temp = 3541;
-do {
-    num = num * 10 + temp % 10;
-    temp /= 10;
-} while (temp != 0);
+int add(int a, int b) {
+    int a = 0;
+}
+int main() {
+    int temp = 0;
+    int num = 0;
+    add(num, temp);
+    temp = 3541;
+    do {
+        num = num * 10 + temp % 10;
+        temp /= 10;
+    } while (temp != 0);
 
-cout << "Reversed number "  << num;
+    cout << "Reversed number "  << num;
+}

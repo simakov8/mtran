@@ -33,7 +33,10 @@ class Var:
 class Parser:
     all_tokens = []
     variables = {}
+    functions = {}
     constants = []
+
+    functions_ast = {}
 
     k = 0
     is_cycle = False
@@ -47,10 +50,11 @@ class Parser:
 
     type = None
 
-    def __init__(self, all_tokens, variables, constants):
+    def __init__(self, all_tokens, variables, constants, functions):
         self.all_tokens = all_tokens
         self.variables = variables
         self.constants = constants
+        self.functions = functions
 
     def next_token(self):
         if (self.k != len(self.all_tokens) - 1):
@@ -326,7 +330,36 @@ class Parser:
         return n
 
 
+    inside_func = False
+    all_done = False
     def statement(self):
+        if self.all_tokens[self.k].lex == 'end' or self.k >= len(self.all_tokens):
+            self.all_done = True
+            return
+        if (l := self.all_tokens[self.k].lex) in self.functions:
+            if l not in self.functions_ast: # function declaration
+                self.inside_func = True
+                args_num = len(self.functions[l])
+                for _ in range(args_num + 1):
+                    self.next_token()
+                node = Node('o')
+                node.childrens.append(self._brace_statement())
+                self.functions_ast[l] = node
+                self.inside_func = False
+            else: # function invocation
+                args_num = len(self.functions[l])
+                node = Node("function", l)  
+                for i in range(args_num):
+                    self.next_token()
+                    node.childrens.append(Node("argument", self.all_tokens[self.k].lex))
+
+                return node
+        if not self.inside_func:
+            self.next_token()
+            self.statement()
+        if self.all_done:
+            return
+
         if self.all_tokens[self.k].lex == 'if':
             return self._if_statement()
         elif self.all_tokens[self.k].lex == 'while':
@@ -369,9 +402,5 @@ class Parser:
         return n
 
     def parse(self):
-        node = Node('o')
-        while self.k != len(self.all_tokens) - 1:
-            child_node = self.statement()
-            if child_node is not None:
-                node.childrens.append(child_node)
-        return node
+        self.statement()
+        return self.functions_ast
