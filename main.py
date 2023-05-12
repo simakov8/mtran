@@ -14,8 +14,8 @@ def main():
         printTree(ast_trees[f_name])
 
 
-    #executable = Executable(ast_tree)
-    #executable.execute()
+    executable = Executable(parser)
+    executable.execute()
 
 
 if __name__ == '__main__':

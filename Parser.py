@@ -352,7 +352,7 @@ class Parser:
                 for i in range(args_num):
                     self.next_token()
                     node.childrens.append(Node("argument", self.all_tokens[self.k].lex))
-
+                self.next_token()
                 return node
         if not self.inside_func:
             self.next_token()
