@@ -1,4 +1,5 @@
 import sys
+import re
 
 class Node:
     childrens = []
@@ -34,6 +35,7 @@ class Parser:
     all_tokens = []
     variables = {}
     functions = {}
+    asm_insertions = {}
     constants = []
 
     functions_ast = {}
@@ -50,11 +52,12 @@ class Parser:
 
     type = None
 
-    def __init__(self, all_tokens, variables, constants, functions):
+    def __init__(self, all_tokens, variables, constants, functions, asm_insertions):
         self.all_tokens = all_tokens
         self.variables = variables
         self.constants = constants
         self.functions = functions
+        self.asm_insertions = asm_insertions
 
     def next_token(self):
         if (self.k != len(self.all_tokens) - 1):
@@ -387,6 +390,7 @@ class Parser:
         if self.all_done:
             return
 
+        current_insertion = self.all_tokens[self.k].lex
         if self.all_tokens[self.k].lex == 'if':
             return self._if_statement()
         elif self.all_tokens[self.k].lex == 'while':
@@ -401,6 +405,11 @@ class Parser:
             return self._cout_statement()
         elif self.all_tokens[self.k].lex == 'return':
             return self._return_token()
+        elif m := re.match(r"asm_insertion(.*)", current_insertion):
+            cur_n = int(m.group(1))
+            n = Node(current_insertion, self.asm_insertions[cur_n])
+            self.next_token()
+            return n
         elif self.all_tokens[self.k].lex == ';':
             n = None
             self.is_assignment = False

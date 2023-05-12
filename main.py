@@ -7,7 +7,7 @@ def main():
     lexer.perfome_lexical_analysis('input.txt', True)
     lexer.all_tokens.append(Token('end'))
 
-    parser = Parser(lexer.all_tokens, lexer.variables, lexer.constants, lexer.functions)
+    parser = Parser(lexer.all_tokens, lexer.variables, lexer.constants, lexer.functions, lexer.asm_insertions)
     ast_trees = parser.parse()
     for f_name in ast_trees:
         print(f_name)

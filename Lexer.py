@@ -84,6 +84,8 @@ class Lexer:
             return 'int'
         elif re.match(string_regex, arg):
             return 'string'
+    
+    asm_insertions = {}
 
     def perfome_lexical_analysis(self, file_name, output):
         f = open(file_name)
@@ -110,10 +112,12 @@ class Lexer:
         separator_regex = r"[(),;{}]"
         func_regex = r"([a-zA-Z_]+)\((.*)\)"
         whitespace_regex = r"\s+"
+        asm_regex = r"\s*asm\n\s*{\n([\S\s]*)\n\s*};"
 
         # Combine all regular expressions into one
-        pattern = re.compile(f"({'|'.join([func_regex, id_regex, number_regex, operator_regex, string_regex, separator_regex, whitespace_regex])})")
+        pattern = re.compile(f"({'|'.join([asm_regex, func_regex, id_regex, number_regex, operator_regex, string_regex, separator_regex, whitespace_regex])})")
 
+        asm = 0
         state=''
         type = ''
         total_symbols_in_previos_lines = 0
@@ -121,7 +125,12 @@ class Lexer:
         for match in pattern.finditer(source_code):
             self.pos =  match.end() - total_symbols_in_previos_lines
             lex = match.group()
-            if re.match(whitespace_regex, lex):
+            if m := re.match(asm_regex, lex):
+                commands = [x.strip() for x in m.group(1).split('\n')]
+                self.all_tokens.append(Token('asm_insertion' + str(asm)))
+                self.asm_insertions[asm] = commands
+                asm += 1
+            elif re.match(whitespace_regex, lex):
                 if '\n' in lex:
                     self.line += lex.count('\n')
                     self.pos = 0

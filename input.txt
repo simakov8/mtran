@@ -1,11 +1,13 @@
-int add(int a, int b) {
-    int c = a + b;
-    return c;
-}
 int main() {
     int temp = 0;
     int num = 0;
     temp = 3541;
+    asm
+    {
+        mov ax, temp
+        inc ax
+        mov temp, ax
+    };
     do {
         num = num * 10 + temp % 10;
         temp /= 10;
