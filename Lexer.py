@@ -77,6 +77,14 @@ class Lexer:
     constants = {}
     all_tokens = []
 
+    def get_type(self, arg):
+        number_regex = r"\d+(\.\d+)?"
+        string_regex = r'"(.*?)"'
+        if re.match(number_regex, arg):
+            return 'int'
+        elif re.match(string_regex, arg):
+            return 'string'
+
     def perfome_lexical_analysis(self, file_name, output):
         f = open(file_name)
         source_code = f.read()
@@ -124,8 +132,13 @@ class Lexer:
                 func_args = m.group(2).split(',')
                 if len(func_args) == 1 and func_args[0] == '':
                     func_args.clear()
+
+                for arg in func_args:
+                    if arg not in self.constants and func_name in self.functions:
+                        self.constants[arg.strip()] = self.get_type(arg.strip()) 
+                        const_table.add_row([arg, self.get_type(arg.strip())])
                 if func_name not in self.functions: #function defenition
-                    self.functions[func_name] = [arg.strip().split(' ')[0] for arg in func_args]
+                    self.functions[func_name] = [[arg.strip().split(' ')[0], arg.strip().split(' ')[1]] for arg in func_args]
                 self.all_tokens.append(Token(func_name, self.line, self.pos))
                 [self.all_tokens.append(Token(arg.strip(), self.line, self.pos)) for arg in func_args]
             elif re.match(id_regex, lex):

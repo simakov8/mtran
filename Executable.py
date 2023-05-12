@@ -55,6 +55,18 @@ class Executable:
         for child in node.childrens:
             print(self.execute_node(child), end='')
 
+    def func(self, node: Node):
+        arg_num = 0
+        for i in self.parser.functions[node.value]:
+            var = i[1]
+            value = self.execute_node(node.childrens[arg_num])
+            arg_num += 1
+            self.variables[var] = value
+        return self.execute_node(self.parser.functions_ast[node.value].childrens[0])
+    
+    def ret(self, node: Node):
+        return self.execute_node(node.childrens[0])
+
     
     def get_variable(self, lex):
         return self.variables[lex]
@@ -97,6 +109,10 @@ class Executable:
                 return self.not_eq(node)
             elif node.kind == 'cout':
                 self.cout(node)
+            elif node.kind == 'function':
+                return self.func(node)
+            elif node.kind == 'return':
+                return self.ret(node)
 
     def execute(self):
         if 'main' in self.parser.functions_ast:

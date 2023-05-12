@@ -115,6 +115,18 @@ class Parser:
             n = Node('constant', lex)
             self.next_token()
             return n
+        elif lex in self.functions:
+            n = Node('function', lex)
+            args_num = len(self.functions[lex])
+            for _ in range(args_num):
+                self.next_token()
+                type = self.all_tokens[self.k].lex
+                if type in self.constants:
+                    n.childrens.append(Node("constant", self.all_tokens[self.k].lex))
+                if type in self.variables:
+                    n.childrens.append(Node('variable', self.all_tokens[self.k].lex))
+            self.next_token()
+            return n
         else:
             return self.parenthesis_expression()
 
@@ -330,6 +342,18 @@ class Parser:
         return n
 
 
+    def _return_token(self):
+        n = Node('return')
+        self.next_token()
+        what_return = self.all_tokens[self.k].lex
+        if what_return in self.constants:
+            n.childrens.append(Node("constant", what_return))
+        elif what_return in self.variables:
+            n.childrens.append(Node("variable", what_return))
+        self.next_token()
+        return n
+
+
     inside_func = False
     all_done = False
     def statement(self):
@@ -340,8 +364,11 @@ class Parser:
             if l not in self.functions_ast: # function declaration
                 self.inside_func = True
                 args_num = len(self.functions[l])
-                for _ in range(args_num + 1):
+                for _ in range(args_num):
                     self.next_token()
+                    t = self.all_tokens[self.k].lex
+                    self.new_var.append(Var(self.all_tokens[self.k].lex.split(' ')[1], self.cur_depth))
+                self.next_token()
                 node = Node('o')
                 node.childrens.append(self._brace_statement())
                 self.functions_ast[l] = node
@@ -372,6 +399,8 @@ class Parser:
             return self._loop_control_statement()
         elif self.all_tokens[self.k].lex == 'cout':
             return self._cout_statement()
+        elif self.all_tokens[self.k].lex == 'return':
+            return self._return_token()
         elif self.all_tokens[self.k].lex == ';':
             n = None
             self.is_assignment = False
